@@ -181,8 +181,8 @@
       padding: 28px 20px 22px; text-align: center; margin-bottom: 16px;
     }
     .current-chord {
-      font-size: 80px; font-weight: 900; line-height: 1;
-      min-height: 88px; display: flex; align-items: center; justify-content: center;
+      font-size: 56px; font-weight: 900; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
       transition: transform 0.08s;
     }
     .current-chord.flash { transform: scale(1.06); }
@@ -391,6 +391,7 @@
 
     <div class="trainer-box">
       <div class="current-chord" id="trainerChord">—</div>
+      <div id="trainerDiagram" style="display:flex;justify-content:center;margin:8px 0 4px;min-height:80px"></div>
       <div class="next-row">
         <div class="next-label">Next up</div>
         <div class="next-chord" id="trainerNext">—</div>
@@ -767,6 +768,22 @@
       ).join('');
   }
 
+  function renderTrainerChord(key) {
+    document.getElementById('trainerChord').textContent = key || '—';
+    const diagramEl = document.getElementById('trainerDiagram');
+    const chord = CHORDS.find(c => c.key === key);
+    if (chord) {
+      const strNames = ['E','A','D','G','B','e'];
+      const fretRow = chord.strings.map((f, i) => {
+        const label = f === -1 ? '✕' : f === 0 ? 'O' : f;
+        return `<div class="str-cell"><div class="str-fret" style="color:${f === -1 ? 'var(--muted)' : 'var(--text)'}">${label}</div><div style="font-size:10px;color:var(--muted);margin-top:1px">${strNames[i]}</div></div>`;
+      }).join('');
+      diagramEl.innerHTML = `<div style="text-align:center">${makeChordSVG(chord)}<div class="string-labels" style="justify-content:center;gap:0;margin-top:4px">${fretRow}</div></div>`;
+    } else {
+      diagramEl.innerHTML = '';
+    }
+  }
+
   function toggleShuffle() {
     trShuffle = !trShuffle;
     const btn = document.getElementById('shuffleBtn');
@@ -868,7 +885,7 @@
         const cur = trSelected[trChordPos];
         const nxt = trShuffle ? '?' : trSelected[(trChordPos + 1) % trSelected.length];
 
-        document.getElementById('trainerChord').textContent = cur;
+        renderTrainerChord(cur);
         document.getElementById('trainerNext').textContent = trSelected.length > 1 ? nxt : '—';
 
         if (isNewChord) {
@@ -903,6 +920,9 @@
     trRunning = false;
     document.getElementById('trainerBtn').textContent = '▶ Start';
     document.getElementById('trainerBtn').classList.remove('stop');
+    document.getElementById('trainerChord').textContent = '—';
+    document.getElementById('trainerDiagram').innerHTML = '';
+    document.getElementById('trainerNext').textContent = '—';
     document.querySelectorAll('.beat-light').forEach(d => d.classList.remove('on'));
     buildTrainerStrumGrid(-1);
   }
