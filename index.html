@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Nose Over Tail — Guitar</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --accent: #e63946;
+      --accent2: #f4a261;
+      --text: #f0f0f5;
+      --muted: #777;
+      --border: #2a2a40;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 430px;
+      margin: 0 auto;
+      padding-bottom: 80px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--card);
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 22px; font-weight: 900; letter-spacing: -0.5px;
+    }
+    .header p { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: var(--card); border-top: 1px solid var(--border);
+      display: flex; z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .tab-btn {
+      flex: 1; padding: 10px 8px 8px; background: none; border: none;
+      color: var(--muted); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      transition: color 0.15s;
+    }
+    .tab-btn .icon { font-size: 20px; line-height: 1; }
+    .tab-btn.active { color: var(--accent); }
+
+    /* ── TAB CONTENT ── */
+    .tab-content { display: none; padding: 16px 16px 8px; }
+    .tab-content.active { display: block; }
+
+    /* ── SHARED ── */
+    .section-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--muted); margin-bottom: 10px;
+    }
+    .card {
+      background: var(--card); border-radius: 16px;
+      border: 1px solid var(--border); overflow: hidden;
+    }
+    .pill-btn {
+      padding: 8px 16px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--card);
+      color: var(--text); font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pill-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    input[type="range"] {
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 4px; background: var(--border); border-radius: 2px; outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 22px; height: 22px;
+      border-radius: 50%; background: var(--accent); cursor: pointer;
+    }
+
+    /* ══════════════════════════════════════
+       LEARN TAB
+    ══════════════════════════════════════ */
+    .chord-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .nav-arrow {
+      width: 46px; height: 46px; border-radius: 50%;
+      border: 1.5px solid var(--border); background: var(--card);
+      color: var(--text); font-size: 22px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .nav-arrow:active { background: var(--border); }
+    .nav-arrow:disabled { opacity: 0.25; pointer-events: none; }
+    .chord-counter { font-size: 13px; color: var(--muted); }
+
+    .chord-card-inner { padding: 22px 20px 20px; }
+    .chord-big-name {
+      font-size: 44px; font-weight: 900; text-align: center;
+      line-height: 1; margin-bottom: 4px;
+    }
+    .chord-used {
+      text-align: center; font-size: 11px; font-weight: 700;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 18px;
+    }
+    .chord-diagram-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+
+    /* String label row */
+    .string-labels {
+      display: flex; justify-content: center; gap: 0;
+      margin-bottom: 14px;
+    }
+    .str-cell {
+      width: 28px; text-align: center;
+      font-size: 11px; color: var(--muted); font-weight: 600;
+    }
+    .str-fret {
+      font-size: 13px; font-weight: 800; color: var(--text);
+    }
+
+    .chord-tip {
+      background: rgba(255,255,255,0.04); border-radius: 10px;
+      padding: 12px 14px; font-size: 13px; color: #aaa; line-height: 1.55;
+    }
+    .chord-tip strong { color: var(--text); }
+
+    .progress-dots {
+      display: flex; justify-content: center; gap: 8px; margin-top: 14px;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--border); transition: background 0.2s, transform 0.2s;
+    }
+    .dot.active { background: var(--accent); transform: scale(1.3); }
+
+    /* ══════════════════════════════════════
+       TRAINER TAB
+    ══════════════════════════════════════ */
+    .chord-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+
+    .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .slider-side { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .slider-val { font-size: 16px; font-weight: 800; color: var(--text); min-width: 52px; text-align: right; }
+
+    .beats-row { display: flex; gap: 8px; margin-bottom: 20px; }
+    .beats-option {
+      flex: 1; padding: 10px 6px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: var(--card);
+      color: var(--muted); font-size: 14px; font-weight: 700;
+      cursor: pointer; text-align: center; transition: all 0.15s;
+    }
+    .beats-option span { font-size: 9px; display: block; letter-spacing: 0.5px; }
+    .beats-option.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    .shuffle-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .shuffle-btn {
+      flex: 1; padding: 11px; border-radius: 12px;
+      border: 1.5px solid var(--border); background: var(--card);
+      color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.15s;
+    }
+    .shuffle-btn.active { background: rgba(230,57,70,0.12); border-color: var(--accent); color: var(--accent); }
+
+    .trainer-box {
+      background: var(--card); border-radius: 18px; border: 1px solid var(--border);
+      padding: 28px 20px 22px; text-align: center; margin-bottom: 16px;
+    }
+    .current-chord {
+      font-size: 80px; font-weight: 900; line-height: 1;
+      min-height: 88px; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.08s;
+    }
+    .current-chord.flash { transform: scale(1.06); }
+    .next-row { margin-top: 6px; }
+    .next-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .next-chord { font-size: 18px; font-weight: 800; color: var(--muted); }
+
+    .beat-lights {
+      display: flex; justify-content: center; gap: 12px; margin-top: 18px;
+    }
+    .beat-light {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--border); transition: background 0.06s, transform 0.06s;
+    }
+    .beat-light.on { background: var(--accent); transform: scale(1.25); }
+    .beat-light.one.on { background: #fff; }
+
+    .big-btn {
+      width: 100%; padding: 16px; border-radius: 14px; border: none;
+      font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+      cursor: pointer; background: var(--accent); color: white;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    .big-btn:active { opacity: 0.85; }
+    .big-btn.stop { background: #3a3a52; }
+
+    /* ══════════════════════════════════════
+       PLAY ALONG TAB
+    ══════════════════════════════════════ */
+    .play-controls-card { padding: 16px; margin-bottom: 14px; }
+    .tempo-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+    .tempo-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+    .tempo-display { font-size: 20px; font-weight: 900; }
+    .tempo-display small { font-size: 12px; font-weight: 400; color: var(--muted); }
+    .slider-row-play { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .tempo-btn-row { display: flex; gap: 6px; margin-bottom: 14px; }
+    .tempo-preset {
+      flex: 1; padding: 8px 4px; border-radius: 8px;
+      border: 1.5px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 11px; font-weight: 700;
+      cursor: pointer; text-align: center; transition: all 0.15s;
+    }
+    .tempo-preset.active { border-color: var(--accent2); color: var(--accent2); background: rgba(244,162,97,0.08); }
+
+    .chord-quick-ref {
+      display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 10px;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .chord-quick-ref::-webkit-scrollbar { display: none; }
+    .chord-ref-chip {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 5px 12px; font-size: 13px; font-weight: 800; white-space: nowrap;
+      color: var(--text); cursor: pointer; flex-shrink: 0;
+    }
+
+    .song-body { padding-bottom: 8px; }
+    .song-section-block { margin-bottom: 24px; }
+    .song-section-name {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 2px; color: var(--accent); margin-bottom: 10px;
+      padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    }
+    .lyric-line { margin-bottom: 14px; }
+    .chord-above {
+      display: flex; height: 20px; align-items: flex-end;
+      margin-bottom: 2px; gap: 0; position: relative;
+    }
+    .chord-token {
+      font-size: 13px; font-weight: 900; color: var(--accent);
+      letter-spacing: 0; position: absolute; bottom: 0;
+    }
+    .lyric-words {
+      font-size: 15px; color: #bbb; line-height: 1.4;
+    }
+    .lyric-line.current .lyric-words { color: #fff; font-weight: 600; }
+    .lyric-line.current .chord-token { color: var(--accent2); }
+
+    .disclaimer {
+      font-size: 11px; color: var(--muted); text-align: center;
+      padding: 8px 16px 4px; line-height: 1.5;
+    }
+
+    /* ══════════════════════════════════════
+       STRUM TAB
+    ══════════════════════════════════════ */
+    .pattern-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .pattern-card {
+      background: var(--card); border: 1.5px solid var(--border); border-radius: 14px;
+      padding: 14px 16px; cursor: pointer; transition: all 0.15s;
+    }
+    .pattern-card.active { border-color: var(--accent); background: rgba(230,57,70,0.08); }
+    .pattern-card-top { display: flex; align-items: center; justify-content: space-between; }
+    .pattern-level { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+    .pattern-name { font-size: 17px; font-weight: 800; }
+    .pattern-badge {
+      font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+      background: var(--border); color: var(--muted);
+    }
+    .pattern-card.active .pattern-badge { background: var(--accent); color: white; }
+    .pattern-desc { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+
+    /* Strum grid */
+    .strum-grid-card { padding: 18px 16px; margin-bottom: 18px; }
+    .strum-grid-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 12px; }
+    .strum-grid {
+      display: grid; grid-template-columns: repeat(8, 1fr);
+      gap: 4px; margin-bottom: 10px;
+    }
+    .strum-cell {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 8px 2px; border-radius: 8px; background: rgba(255,255,255,0.03);
+      border: 1px solid transparent; transition: background 0.06s, border-color 0.06s;
+    }
+    .strum-cell.beat-1 { background: rgba(255,255,255,0.06); }
+    .strum-cell.lit { background: rgba(230,57,70,0.25); border-color: var(--accent); }
+    .strum-cell.lit.beat-1 { background: rgba(255,255,255,0.22); border-color: #fff; }
+    .strum-beat-label { font-size: 9px; font-weight: 700; color: var(--muted); }
+    .strum-cell.beat-1 .strum-beat-label { color: #aaa; }
+    .strum-arrow {
+      font-size: 18px; line-height: 1; min-height: 22px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .strum-arrow.down { color: var(--accent); }
+    .strum-arrow.up   { color: var(--accent2); }
+    .strum-arrow.rest { color: transparent; }
+
+    .strum-legend {
+      display: flex; gap: 16px; justify-content: center; margin-top: 4px;
+    }
+    .legend-item { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+    /* Play along strum bar */
+    .play-strum-bar {
+      background: rgba(230,57,70,0.07); border: 1px solid rgba(230,57,70,0.25);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .play-strum-label { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
+    .play-strum-mini {
+      display: flex; gap: 3px; flex: 1; justify-content: center;
+    }
+    .psm-cell {
+      width: 22px; height: 26px; border-radius: 5px;
+      background: rgba(255,255,255,0.04);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 13px; gap: 1px;
+    }
+    .psm-beat { font-size: 7px; color: var(--muted); font-weight: 700; }
+    .psm-cell.has-strum { background: rgba(255,255,255,0.08); }
+    .psm-cell.psm-lit { background: rgba(230,57,70,0.3) !important; outline: 1.5px solid var(--accent); }
+    .ll-strum-row { display: flex; gap: 3px; margin-top: 8px; }
+    .ll-strum-row .psm-cell { opacity: 0.35; transition: opacity 0.06s, background 0.06s; }
+    .lyric-line.current .ll-strum-row .psm-cell { opacity: 1; }
+    .ll-strum-row .psm-beat-1 { background: rgba(255,255,255,0.07) !important; }
+    .psm-arrow-d { color: var(--accent); font-size: 14px; }
+    .psm-arrow-u { color: var(--accent2); font-size: 14px; }
+    .play-strum-change {
+      font-size: 11px; color: var(--accent); font-weight: 700; cursor: pointer;
+      white-space: nowrap; text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Nose Over Tail</h1>
+    <p>Alkaline Trio · Beginner Version · <span style="color:#f4a261;font-weight:800">CAPO FRET 2</span></p>
+  </div>
+
+  <!-- ═══════════════ LEARN TAB ═══════════════ -->
+  <div id="tab-chords" class="tab-content active">
+    <div style="background:#2a1f0a;border:1px solid #f4a261;border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:22px">🎸</span>
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#f4a261">Put capo on fret 2</div>
+        <div style="font-size:11px;color:#a07040;margin-top:1px">Clip it behind the 2nd fret. Then play these open chord shapes.</div>
+      </div>
+    </div>
+    <div class="chord-nav">
+      <button class="nav-arrow" id="prevBtn" onclick="changeChord(-1)">‹</button>
+      <span class="chord-counter" id="chordCounter">1 / 6</span>
+      <button class="nav-arrow" id="nextBtn" onclick="changeChord(1)">›</button>
+    </div>
+    <div class="card" id="chordCard"></div>
+    <div class="progress-dots" id="progressDots"></div>
+  </div>
+
+  <!-- ═══════════════ TRAINER TAB ═══════════════ -->
+  <div id="tab-trainer" class="tab-content">
+    <div class="section-label">Chords to Practice</div>
+    <div class="chord-selector" id="chordSelector"></div>
+
+    <div class="section-label">Tempo</div>
+    <div class="slider-row">
+      <span class="slider-side">Slow</span>
+      <input type="range" id="bpmSlider" min="40" max="200" value="60" oninput="onBpmChange()">
+      <span class="slider-val" id="bpmDisplay">60 BPM</span>
+    </div>
+
+    <div class="section-label">Beats per Chord</div>
+    <div class="beats-row" id="beatsRow"></div>
+
+    <div class="shuffle-row">
+      <button class="shuffle-btn" id="shuffleBtn" onclick="toggleShuffle()">🔀 Shuffle Chords</button>
+    </div>
+
+    <div class="trainer-box">
+      <div class="current-chord" id="trainerChord">—</div>
+      <div class="next-row">
+        <div class="next-label">Next up</div>
+        <div class="next-chord" id="trainerNext">—</div>
+      </div>
+      <div class="beat-lights" id="beatLights"></div>
+      <div style="margin-top:16px;width:100%">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px" id="trStrumLabel">Strum: All Down</div>
+        <div class="strum-grid" id="trStrumGrid"></div>
+      </div>
+    </div>
+
+    <button class="big-btn" id="trainerBtn" onclick="toggleTrainer()">▶ Start</button>
+  </div>
+
+  <!-- ═══════════════ STRUM TAB ═══════════════ -->
+  <div id="tab-strum" class="tab-content">
+    <div class="pattern-cards" id="patternCards"></div>
+
+    <div class="card strum-grid-card">
+      <div class="strum-grid-label">Live Pattern — watch &amp; strum along</div>
+      <div class="strum-grid" id="strumGrid"></div>
+      <div class="strum-legend">
+        <span class="legend-item"><span style="color:var(--accent);font-size:15px">↓</span> downstroke</span>
+        <span class="legend-item"><span style="color:var(--accent2);font-size:15px">↑</span> upstroke</span>
+        <span class="legend-item"><span style="color:#444;font-size:15px">·</span> skip</span>
+      </div>
+    </div>
+
+    <div class="section-label">Tempo</div>
+    <div class="slider-row">
+      <span class="slider-side">Slow</span>
+      <input type="range" id="strumBpmSlider" min="40" max="160" value="60" oninput="onStrumBpmChange()">
+      <span class="slider-val" id="strumBpmVal">60 BPM</span>
+    </div>
+
+    <button class="big-btn" id="strumBtn" onclick="toggleStrum()">▶ Start</button>
+  </div>
+
+  <!-- ═══════════════ PLAY ALONG TAB ═══════════════ -->
+  <div id="tab-play" class="tab-content">
+    <div class="card play-controls-card">
+      <div class="tempo-header">
+        <span class="tempo-title">Tempo</span>
+        <span class="tempo-display" id="playTempoBig">70 <small>BPM</small></span>
+      </div>
+      <div class="slider-row-play">
+        <span class="slider-side" style="font-size:11px;color:var(--muted)">40</span>
+        <input type="range" id="playBpmSlider" min="40" max="160" value="70" oninput="onPlayBpmChange()">
+        <span class="slider-side" style="font-size:11px;color:var(--muted)">160</span>
+      </div>
+      <div class="tempo-btn-row" id="tempoPresets"></div>
+      <button class="big-btn" id="playBtn" onclick="togglePlayAlong()">▶ Play Along</button>
+    </div>
+
+    <div class="play-strum-bar" id="playStrumBar">
+      <span class="play-strum-label">Strum</span>
+      <div class="play-strum-mini" id="playStrumMini"></div>
+      <span class="play-strum-change" onclick="showTab('strum')">Change →</span>
+    </div>
+
+    <div class="section-label">Quick Chord Reference</div>
+    <div class="chord-quick-ref" id="chordQuickRef"></div>
+
+    <div style="background:#2a1f0a;border:1px solid #f4a261;border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">🎸</span>
+      <div style="font-size:12px;font-weight:700;color:#f4a261">Capo fret 2 — play the shapes shown</div>
+    </div>
+    <div class="song-body" id="songBody"></div>
+    <p class="disclaimer">Chord positions are approximate. Play along with the recording to find the exact feel.</p>
+  </div>
+
+  <!-- ═══════════════ TAB BAR ═══════════════ -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" id="tab-btn-chords" onclick="showTab('chords')">
+      <span class="icon">🎸</span>Chords
+    </button>
+    <button class="tab-btn" id="tab-btn-trainer" onclick="showTab('trainer')">
+      <span class="icon">⏱</span>Trainer
+    </button>
+    <button class="tab-btn" id="tab-btn-strum" onclick="showTab('strum')">
+      <span class="icon">🎵</span>Strum
+    </button>
+    <button class="tab-btn" id="tab-btn-play" onclick="showTab('play')">
+      <span class="icon">▶</span>Play Along
+    </button>
+  </nav>
+
+  <script>
+  // ╔══════════════════════════════════════════╗
+  // ║  DATA                                    ║
+  // ╚══════════════════════════════════════════╝
+
+  // ALL CHORDS USE CAPO 2
+  // strings array: [lowE, A, D, G, B, highE]
+  // -1 = muted (X), 0 = open (O), n = fret number
+  const CHORDS = [
+    {
+      key: 'A',
+      sounds: 'B',
+      strings: [-1, 0, 2, 2, 2, 0],
+      baseFret: 1,
+      barre: null,
+      fingers: [null, null, 1, 2, 3, null],
+      tip: 'Mute the low E — don\'t strum it. <strong>Index</strong> on D (fret 2). <strong>Middle</strong> on G (fret 2). <strong>Ring</strong> on B (fret 2). With capo 2 this sounds like B.',
+      usedIn: 'Intro · Verse · Chorus · Bridge'
+    },
+    {
+      key: 'D',
+      sounds: 'E',
+      strings: [-1, -1, 0, 2, 3, 2],
+      baseFret: 1,
+      barre: null,
+      fingers: [null, null, null, 1, 3, 2],
+      tip: 'Mute the two thick strings. <strong>Index</strong> on G (fret 2). <strong>Middle or ring</strong> on high e (fret 2). <strong>Pinky or ring</strong> on B (fret 3). With capo 2 this sounds like E.',
+      usedIn: 'Intro · Verse · Outro'
+    },
+    {
+      key: 'Em',
+      sounds: 'F#m',
+      strings: [0, 2, 2, 0, 0, 0],
+      baseFret: 1,
+      barre: null,
+      fingers: [null, 1, 2, null, null, null],
+      tip: 'One of the easiest chords! <strong>Middle</strong> on A (fret 2). <strong>Ring</strong> on D (fret 2). Everything else rings open. With capo 2 this sounds like F#m.',
+      usedIn: 'Pre-Chorus · Chorus'
+    },
+    {
+      key: 'G',
+      sounds: 'A',
+      strings: [3, 2, 0, 0, 0, 3],
+      baseFret: 1,
+      barre: null,
+      fingers: [2, 1, null, null, null, 3],
+      tip: '<strong>Middle</strong> on low E (fret 3). <strong>Index</strong> on A (fret 2). <strong>Ring</strong> on high e (fret 3). Middle strings all ring open. With capo 2 this sounds like A.',
+      usedIn: 'Pre-Chorus · Chorus · Bridge · Outro'
+    }
+  ];
+
+  // Song structure with CAPO 2 — chord shapes shown, actual pitch in parentheses
+  // Chord positions are approximate — follow along with the recording.
+  const SONG = [
+    {
+      name: 'INTRO',
+      lines: [
+        { chords: [{t:'A', p:0}, {t:'D', p:6}], lyric: '(A — D — repeat)' }
+      ]
+    },
+    {
+      name: 'VERSE 1',
+      lines: [
+        { chords: [{t:'A', p:0}, {t:'D', p:22}], lyric: "Cracked my head open on your kitchen floor" },
+        { chords: [{t:'A', p:0}, {t:'D', p:20}], lyric: "To prove to you that I have brains" },
+        { chords: [{t:'A', p:0}, {t:'D', p:24}], lyric: "Meanwhile, tin men are led by little girls" },
+        { chords: [{t:'A', p:0}, {t:'D', p:20}], lyric: "Down golden roads that lead to nowhere" },
+      ]
+    },
+    {
+      name: 'CHORUS',
+      lines: [
+        { chords: [{t:'Em', p:0}, {t:'G', p:32}], lyric: "Fine time to fake a seizure to feel your mouth on mine" },
+        { chords: [{t:'Em', p:0}, {t:'G', p:10}], lyric: "You're saving me" },
+      ]
+    },
+    {
+      name: 'VERSE 2',
+      lines: [
+        { chords: [{t:'Em', p:0}, {t:'G', p:24}], lyric: "Whatever happened to that silly dream you had?" },
+        { chords: [{t:'Em', p:0}, {t:'G', p:26}], lyric: "I want to make it real, I'd love to rub your back" },
+        { chords: [{t:'Em', p:0}, {t:'G', p:24}], lyric: "Like a plane crash that never hits the ground" },
+        { chords: [{t:'A', p:0},  {t:'D', p:24}], lyric: "I fall in love with you, I'm nose over tail for you" },
+      ]
+    },
+    {
+      name: 'CHORUS',
+      lines: [
+        { chords: [{t:'A', p:0},  {t:'D', p:28}], lyric: "Your voice like the sound of sirens to a house on fire" },
+        { chords: [{t:'Em', p:0}, {t:'G', p:10}], lyric: "You're saving me" },
+      ]
+    }
+  ];
+
+  // ╔══════════════════════════════════════════╗
+  // ║  SVG CHORD DIAGRAM                       ║
+  // ╚══════════════════════════════════════════╝
+
+  function makeChordSVG(chord) {
+    const W = 158, H = 168;
+    const pL = 28, pT = 38;
+    const sGap = 18, fGap = 22;
+    const nStr = 6, nFret = 4;
+    const tW = sGap * (nStr - 1);
+    const tH = fGap * nFret;
+
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+
+    // Fret lines
+    for (let f = 0; f <= nFret; f++) {
+      const y = pT + f * fGap;
+      const isNut = f === 0 && chord.baseFret === 1;
+      s += `<line x1="${pL}" y1="${y}" x2="${pL + tW}" y2="${y}" stroke="${isNut ? '#ccc' : '#3a3a55'}" stroke-width="${isNut ? 5 : 1.5}"/>`;
+    }
+
+    // String lines
+    for (let i = 0; i < nStr; i++) {
+      const x = pL + i * sGap;
+      s += `<line x1="${x}" y1="${pT}" x2="${x}" y2="${pT + tH}" stroke="#3a3a55" stroke-width="1.5"/>`;
+    }
+
+    // Fret number label (when not starting at fret 1)
+    if (chord.baseFret > 1) {
+      s += `<text x="${pL + tW + 8}" y="${pT + fGap * 0.65}" font-size="11" fill="#666" font-family="-apple-system,sans-serif">${chord.baseFret}fr</text>`;
+    }
+
+    // Barre bar
+    if (chord.barre) {
+      const { fret, from, to } = chord.barre;
+      const rel = fret - chord.baseFret + 1;
+      const y = pT + (rel - 0.5) * fGap;
+      const x1 = pL + from * sGap;
+      const x2 = pL + to * sGap;
+      s += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#e63946" stroke-width="14" stroke-linecap="round" opacity="0.7"/>`;
+    }
+
+    // Open / muted markers and finger dots
+    for (let i = 0; i < nStr; i++) {
+      const fret = chord.strings[i];
+      const x = pL + i * sGap;
+      if (fret === -1) {
+        // X
+        s += `<line x1="${x-5}" y1="${pT-19}" x2="${x+5}" y2="${pT-9}" stroke="#555" stroke-width="2" stroke-linecap="round"/>`;
+        s += `<line x1="${x+5}" y1="${pT-19}" x2="${x-5}" y2="${pT-9}" stroke="#555" stroke-width="2" stroke-linecap="round"/>`;
+      } else if (fret === 0) {
+        // Open circle
+        s += `<circle cx="${x}" cy="${pT - 14}" r="5" fill="none" stroke="#555" stroke-width="1.5"/>`;
+      } else {
+        const rel = fret - chord.baseFret + 1;
+        if (rel >= 1 && rel <= nFret) {
+          const y = pT + (rel - 0.5) * fGap;
+          const inBarre = chord.barre
+            && fret === chord.barre.fret
+            && i >= chord.barre.from
+            && i <= chord.barre.to;
+          if (!inBarre) {
+            s += `<circle cx="${x}" cy="${y}" r="9" fill="#e63946"/>`;
+            if (chord.fingers && chord.fingers[i]) {
+              s += `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="white" font-family="-apple-system,sans-serif">${chord.fingers[i]}</text>`;
+            }
+          }
+        }
+      }
+    }
+
+    // String name labels at bottom
+    const strNames = ['E', 'A', 'D', 'G', 'B', 'e'];
+    for (let i = 0; i < nStr; i++) {
+      const x = pL + i * sGap;
+      s += `<text x="${x}" y="${pT + tH + 14}" text-anchor="middle" font-size="10" fill="#555" font-family="-apple-system,sans-serif">${strNames[i]}</text>`;
+    }
+
+    s += '</svg>';
+    return s;
+  }
+
+  // ╔══════════════════════════════════════════╗
+  // ║  LEARN TAB                               ║
+  // ╚══════════════════════════════════════════╝
+
+  let chordIdx = 0;
+
+  function buildDots() {
+    document.getElementById('progressDots').innerHTML =
+      CHORDS.map((_, i) => `<div class="dot${i === 0 ? ' active' : ''}"></div>`).join('');
+  }
+
+  function renderChord(idx) {
+    const c = CHORDS[idx];
+    document.getElementById('chordCounter').textContent = `${idx + 1} / ${CHORDS.length}`;
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').disabled = idx === CHORDS.length - 1;
+
+    // String fret numbers row
+    const strNames = ['E','A','D','G','B','e'];
+    const fretRow = c.strings.map((f, i) => {
+      const label = f === -1 ? '✕' : f === 0 ? 'O' : f;
+      return `<div class="str-cell"><div class="str-fret" style="color:${f === -1 ? 'var(--muted)' : 'var(--text)'}">${label}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${strNames[i]}</div></div>`;
+    }).join('');
+
+    document.getElementById('chordCard').innerHTML = `
+      <div class="chord-card-inner">
+        <div class="chord-big-name">${c.key}</div>
+        <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:2px">
+          sounds like <strong style="color:var(--accent2)">${c.sounds}</strong> with capo 2
+        </div>
+        <div class="chord-used">${c.usedIn}</div>
+        <div class="chord-diagram-wrap">${makeChordSVG(c)}</div>
+        <div class="string-labels">${fretRow}</div>
+        <div class="chord-tip">${c.tip}</div>
+      </div>
+    `;
+
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+  }
+
+  function changeChord(dir) {
+    chordIdx = Math.max(0, Math.min(CHORDS.length - 1, chordIdx + dir));
+    renderChord(chordIdx);
+  }
+
+  // Swipe to change chord
+  let touchX0 = 0;
+  document.addEventListener('touchstart', e => {
+    if (document.getElementById('tab-chords').classList.contains('active'))
+      touchX0 = e.touches[0].clientX;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!document.getElementById('tab-chords').classList.contains('active')) return;
+    const dx = e.changedTouches[0].clientX - touchX0;
+    if (Math.abs(dx) > 45) changeChord(dx < 0 ? 1 : -1);
+  }, { passive: true });
+
+  // ╔══════════════════════════════════════════╗
+  // ║  TRAINER TAB                             ║
+  // ╚══════════════════════════════════════════╝
+
+  let trBpm = 60;
+  let trBeats = 2;
+  let trSelected = ['A', 'D'];
+  let trRunning = false;
+  let trInterval = null;
+  let trBeat = 0;
+  let trChordPos = 0;
+  let trSubBeat = 0;
+  let trShuffle = false;
+  let audioCtx = null;
+
+  const BEATS_OPTIONS = [1, 2, 4, 8];
+
+  function buildChordSelector() {
+    document.getElementById('chordSelector').innerHTML =
+      CHORDS.map(c =>
+        `<button class="pill-btn${trSelected.includes(c.key) ? ' active' : ''}" onclick="toggleChord('${c.key}')">${c.key}</button>`
+      ).join('');
+  }
+
+  function toggleChord(key) {
+    if (trSelected.includes(key)) {
+      if (trSelected.length > 1) trSelected = trSelected.filter(k => k !== key);
+    } else {
+      trSelected.push(key);
+    }
+    buildChordSelector();
+  }
+
+  function buildBeatsRow() {
+    document.getElementById('beatsRow').innerHTML =
+      BEATS_OPTIONS.map(n =>
+        `<div class="beats-option${n === trBeats ? ' active' : ''}" onclick="setBeats(${n})">
+          ${n}
+          <span>beat${n !== 1 ? 's' : ''}</span>
+        </div>`
+      ).join('');
+  }
+
+  function setBeats(n) {
+    trBeats = n;
+    buildBeatsRow();
+    buildBeatLights();
+  }
+
+  function buildBeatLights() {
+    document.getElementById('beatLights').innerHTML =
+      Array.from({ length: trBeats }, (_, i) =>
+        `<div class="beat-light${i === 0 ? ' one' : ''}" id="bl-${i}"></div>`
+      ).join('');
+  }
+
+  function toggleShuffle() {
+    trShuffle = !trShuffle;
+    const btn = document.getElementById('shuffleBtn');
+    btn.classList.toggle('active', trShuffle);
+    btn.textContent = trShuffle ? '🔀 Shuffle: ON' : '🔀 Shuffle Chords';
+  }
+
+  function onBpmChange() {
+    trBpm = parseInt(document.getElementById('bpmSlider').value);
+    document.getElementById('bpmDisplay').textContent = `${trBpm} BPM`;
+    if (trRunning) { stopTrainer(); startTrainer(); }
+  }
+
+  function getAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function click(accent) {
+    try {
+      const ctx = getAudio();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = accent ? 1400 : 900;
+      g.gain.setValueAtTime(accent ? 0.45 : 0.18, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.07);
+    } catch(e) {}
+  }
+
+  function playStrum(stroke) {
+    try {
+      const ctx = getAudio();
+      const o = ctx.createOscillator();
+      const f = ctx.createBiquadFilter();
+      const g = ctx.createGain();
+      o.connect(f); f.connect(g); g.connect(ctx.destination);
+      o.type = 'sawtooth';
+      f.type = 'bandpass';
+      if (stroke === 'D') {
+        o.frequency.value = 130; f.frequency.value = 700; f.Q.value = 0.9;
+        g.gain.setValueAtTime(0.38, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
+        o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.14);
+      } else {
+        o.frequency.value = 260; f.frequency.value = 1400; f.Q.value = 0.9;
+        g.gain.setValueAtTime(0.2, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+        o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.09);
+      }
+    } catch(e) {}
+  }
+
+  function buildTrainerStrumGrid(highlightSlot) {
+    const pat = STRUM_PATTERNS[strumPatternIdx].pattern;
+    const label = document.getElementById('trStrumLabel');
+    if (label) label.textContent = `Strum: ${STRUM_PATTERNS[strumPatternIdx].name}`;
+    const el = document.getElementById('trStrumGrid');
+    if (!el) return;
+    el.innerHTML = pat.map((stroke, i) => {
+      const isOne = i % 2 === 0;
+      const lit = i === highlightSlot;
+      let arrowClass = 'rest', arrowChar = '·';
+      if (stroke === 'D') { arrowClass = 'down'; arrowChar = '↓'; }
+      if (stroke === 'U') { arrowClass = 'up';   arrowChar = '↑'; }
+      return `<div class="strum-cell${isOne ? ' beat-1' : ''}${lit ? ' lit' : ''}">
+        <span class="strum-beat-label">${BEAT_LABELS[i]}</span>
+        <span class="strum-arrow ${arrowClass}">${arrowChar}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function startTrainer() {
+    if (!trSelected.length) return;
+    trRunning = true;
+    trBeat = 0; trChordPos = 0; trSubBeat = 0;
+    document.getElementById('trainerBtn').textContent = '⏹ Stop';
+    document.getElementById('trainerBtn').classList.add('stop');
+
+    const ms = (60 / trBpm / 2) * 1000; // 8th-note interval
+
+    function tick() {
+      const strumSlot = trSubBeat % 8;
+      const isQuarterNote = trSubBeat % 2 === 0;
+
+      if (isQuarterNote) {
+        const isNewChord = trBeat % trBeats === 0;
+        if (isNewChord && trBeat > 0) {
+          if (trShuffle && trSelected.length > 1) {
+            let next;
+            do { next = Math.floor(Math.random() * trSelected.length); } while (next === trChordPos);
+            trChordPos = next;
+          } else {
+            trChordPos = (trChordPos + 1) % trSelected.length;
+          }
+        }
+
+        const cur = trSelected[trChordPos];
+        const nxt = trShuffle ? '?' : trSelected[(trChordPos + 1) % trSelected.length];
+
+        document.getElementById('trainerChord').textContent = cur;
+        document.getElementById('trainerNext').textContent = trSelected.length > 1 ? nxt : '—';
+
+        if (isNewChord) {
+          const el = document.getElementById('trainerChord');
+          el.classList.add('flash');
+          setTimeout(() => el.classList.remove('flash'), 100);
+        }
+
+        const beatInBar = trBeat % trBeats;
+        document.querySelectorAll('.beat-light').forEach((d, i) => {
+          d.classList.toggle('on', i === beatInBar);
+        });
+        if (beatInBar === 0) click(true); // accent only on beat 1
+        trBeat++;
+      }
+
+      // Strum audio + grid highlight
+      const pat = STRUM_PATTERNS[strumPatternIdx].pattern;
+      const stroke = pat[strumSlot];
+      if (stroke) playStrum(stroke);
+      buildTrainerStrumGrid(strumSlot);
+
+      trSubBeat++;
+    }
+
+    tick();
+    trInterval = setInterval(tick, ms);
+  }
+
+  function stopTrainer() {
+    clearInterval(trInterval);
+    trRunning = false;
+    document.getElementById('trainerBtn').textContent = '▶ Start';
+    document.getElementById('trainerBtn').classList.remove('stop');
+    document.querySelectorAll('.beat-light').forEach(d => d.classList.remove('on'));
+    buildTrainerStrumGrid(-1);
+  }
+
+  function toggleTrainer() {
+    if (trRunning) stopTrainer(); else startTrainer();
+  }
+
+  // ╔══════════════════════════════════════════╗
+  // ║  PLAY ALONG TAB                          ║
+  // ╚══════════════════════════════════════════╝
+
+  let playBpm = 70;
+  let playing = false;
+  let playInterval = null;
+  let playStrumInterval = null;
+  let playStrumSlot = 0;
+  let lineIdx = 0;
+  let flatLines = [];
+
+  const TEMPO_PRESETS = [
+    { label: 'Slow 50%', bpm: 70 },
+    { label: 'Medium 75%', bpm: 105 },
+    { label: 'Full Speed', bpm: 140 },
+  ];
+
+  function onPlayBpmChange() {
+    playBpm = parseInt(document.getElementById('playBpmSlider').value);
+    document.getElementById('playTempoBig').innerHTML = `${playBpm} <small>BPM</small>`;
+    syncPresetBtns();
+  }
+
+  function syncPresetBtns() {
+    document.querySelectorAll('.tempo-preset').forEach((b, i) => {
+      b.classList.toggle('active', TEMPO_PRESETS[i].bpm === playBpm);
+    });
+  }
+
+  function setPlayBpm(bpm) {
+    playBpm = bpm;
+    document.getElementById('playBpmSlider').value = bpm;
+    document.getElementById('playTempoBig').innerHTML = `${bpm} <small>BPM</small>`;
+    syncPresetBtns();
+    if (playing) { stopPlay(); startPlay(); }
+  }
+
+  function buildTempoPresets() {
+    document.getElementById('tempoPresets').innerHTML =
+      TEMPO_PRESETS.map((p, i) =>
+        `<button class="tempo-preset${p.bpm === playBpm ? ' active' : ''}" onclick="setPlayBpm(${p.bpm})">${p.label}</button>`
+      ).join('');
+  }
+
+  function buildChordRef() {
+    document.getElementById('chordQuickRef').innerHTML =
+      CHORDS.map(c =>
+        `<div class="chord-ref-chip" onclick="jumpToChord('${c.key}')">${c.key}</div>`
+      ).join('');
+  }
+
+  function jumpToChord(key) {
+    showTab('chords');
+    const idx = CHORDS.findIndex(c => c.key === key);
+    if (idx >= 0) { chordIdx = idx; renderChord(idx); }
+  }
+
+  function buildSong() {
+    flatLines = [];
+    let html = '';
+    SONG.forEach(sec => {
+      html += `<div class="song-section-block">`;
+      html += `<div class="song-section-name">${sec.name}</div>`;
+      sec.lines.forEach(line => {
+        const idx = flatLines.length;
+        flatLines.push(line);
+
+        // Build chord markers using character position
+        const lyricLen = Math.max(line.lyric.length, 15);
+        let chordHtml = '';
+        if (line.chords) {
+          line.chords.forEach(c => {
+            const leftPct = (c.p / (lyricLen * 0.9)) * 100;
+            chordHtml += `<span class="chord-token" style="left:${Math.min(90, leftPct)}%">${c.t}</span>`;
+          });
+        }
+
+        html += `<div class="lyric-line" id="ll-${idx}">
+          <div class="chord-above" style="position:relative">${chordHtml}</div>
+          <div class="lyric-words">${line.lyric}</div>
+          <div class="ll-strum-row"></div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    document.getElementById('songBody').innerHTML = html;
+  }
+
+  function buildSongStrumRows() {
+    const pat = STRUM_PATTERNS[strumPatternIdx].pattern;
+    const cellsHtml = pat.map((stroke, i) => {
+      const isOne = i % 2 === 0;
+      let arrow = '', cls = '';
+      if (stroke === 'D') { arrow = '↓'; cls = 'psm-arrow-d'; }
+      if (stroke === 'U') { arrow = '↑'; cls = 'psm-arrow-u'; }
+      return `<div class="psm-cell${stroke ? ' has-strum' : ''}${isOne ? ' psm-beat-1' : ''}">
+        <span class="psm-beat">${BEAT_LABELS[i]}</span>
+        <span class="${cls}">${arrow || '·'}</span>
+      </div>`;
+    }).join('');
+    document.querySelectorAll('.ll-strum-row').forEach(row => { row.innerHTML = cellsHtml; });
+  }
+
+  function startPlay() {
+    playing = true; lineIdx = 0;
+    document.getElementById('playBtn').textContent = '⏹ Stop';
+    document.getElementById('playBtn').classList.add('stop');
+
+    // 2 beats per line approximation
+    const msPerLine = (2 * 60 / playBpm) * 1000;
+
+    function advance() {
+      document.querySelectorAll('.lyric-line').forEach(el => el.classList.remove('current'));
+      if (lineIdx < flatLines.length) {
+        const el = document.getElementById(`ll-${lineIdx}`);
+        if (el) {
+          el.classList.add('current');
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        lineIdx++;
+      } else {
+        stopPlay();
+      }
+    }
+
+    advance();
+    playInterval = setInterval(advance, msPerLine);
+
+    // Strum pattern audio
+    playStrumSlot = 0;
+    const strumMs = (60 / playBpm / 2) * 1000;
+    const strumPat = STRUM_PATTERNS[strumPatternIdx].pattern;
+    function strumTick() {
+      const slot = playStrumSlot % 8;
+      const stroke = strumPat[slot];
+      if (stroke) playStrum(stroke);
+      // Light up slot on the currently scrolled-to lyric line
+      const curLine = document.querySelector('.lyric-line.current');
+      if (curLine) {
+        curLine.querySelectorAll('.ll-strum-row .psm-cell').forEach((el, i) => {
+          el.classList.toggle('psm-lit', i === slot);
+        });
+      }
+      // Keep the top bar in sync too
+      document.querySelectorAll('#playStrumMini .psm-cell').forEach((el, i) => {
+        el.classList.toggle('psm-lit', i === slot);
+      });
+      playStrumSlot++;
+    }
+    strumTick();
+    playStrumInterval = setInterval(strumTick, strumMs);
+  }
+
+  function stopPlay() {
+    clearInterval(playInterval);
+    clearInterval(playStrumInterval);
+    playing = false;
+    document.getElementById('playBtn').textContent = '▶ Play Along';
+    document.getElementById('playBtn').classList.remove('stop');
+    document.querySelectorAll('.lyric-line').forEach(el => el.classList.remove('current'));
+    document.querySelectorAll('#playStrumMini .psm-cell').forEach(el => el.classList.remove('psm-lit'));
+    document.querySelectorAll('.ll-strum-row .psm-cell').forEach(el => el.classList.remove('psm-lit'));
+  }
+
+  function togglePlayAlong() {
+    if (playing) stopPlay(); else startPlay();
+  }
+
+  // ╔══════════════════════════════════════════╗
+  // ║  STRUM TAB                               ║
+  // ╚══════════════════════════════════════════╝
+
+  // Each pattern is 8 slots = one bar of 4/4 in 8th notes
+  // Slots: 1  +  2  +  3  +  4  +
+  // null = skip/rest, 'D' = downstroke, 'U' = upstroke
+  const STRUM_PATTERNS = [
+    {
+      id: 0,
+      name: 'All Down',
+      level: 'Level 1 — Beginner',
+      badge: 'Start here',
+      desc: 'One downstroke on each beat. Focus entirely on keeping steady time — speed doesn\'t matter yet.',
+      pattern: ['D', null, 'D', null, 'D', null, 'D', null],
+      tip: 'Keep your strumming arm moving down even on the beats you skip. Tap your foot on 1-2-3-4.'
+    },
+    {
+      id: 1,
+      name: 'Down–Up',
+      level: 'Level 2 — Getting Going',
+      badge: 'Most beginner songs',
+      desc: 'Downstroke on every beat, upstroke on every "and." Your arm moves like a pendulum — never stop.',
+      pattern: ['D', 'U', 'D', 'U', 'D', 'U', 'D', 'U'],
+      tip: 'The secret: your arm moves constantly up and down. Only your wrist decides whether to hit the strings.'
+    },
+    {
+      id: 2,
+      name: 'Basic Rock',
+      level: 'Level 3 — Sounds Like Music',
+      badge: 'Great for verses',
+      desc: 'Skip the "and" of beat 1 and the downstroke of beat 3. Creates the classic rock push-pull feel.',
+      pattern: ['D', null, 'D', 'U', null, 'U', 'D', 'U'],
+      tip: 'Keep your arm moving through the skipped strokes. Miss the strings — don\'t stop the motion.'
+    },
+    {
+      id: 3,
+      name: 'Punk Drive',
+      level: 'Level 4 — Song Feel',
+      badge: 'Closest to the song',
+      desc: 'The driving pattern behind this song. Two quick downs at the start, then up-down-up to close it out.',
+      pattern: ['D', 'D', 'U', null, 'U', 'D', null, 'U'],
+      tip: 'The double-down at the start (beats 1 and +1) is the signature punk strum. Practice it slowly first.'
+    }
+  ];
+
+  const BEAT_LABELS = ['1', '+', '2', '+', '3', '+', '4', '+'];
+
+  let strumPatternIdx = 0;
+  let strumBpm = 60;
+  let strumRunning = false;
+  let strumInterval = null;
+  let strumSlot = 0;
+
+  function buildPatternCards() {
+    document.getElementById('patternCards').innerHTML = STRUM_PATTERNS.map(p =>
+      `<div class="pattern-card${p.id === strumPatternIdx ? ' active' : ''}" onclick="selectPattern(${p.id})">
+        <div class="pattern-card-top">
+          <div>
+            <div class="pattern-level">${p.level}</div>
+            <div class="pattern-name">${p.name}</div>
+          </div>
+          <div class="pattern-badge">${p.badge}</div>
+        </div>
+        <div class="pattern-desc">${p.desc}</div>
+      </div>`
+    ).join('');
+  }
+
+  function buildStrumGrid(highlightSlot = -1) {
+    const pat = STRUM_PATTERNS[strumPatternIdx].pattern;
+    document.getElementById('strumGrid').innerHTML = pat.map((stroke, i) => {
+      const isOne = i % 2 === 0; // even slots = beats 1,2,3,4
+      const lit = i === highlightSlot;
+      let arrowClass = 'rest', arrowChar = '·';
+      if (stroke === 'D') { arrowClass = 'down'; arrowChar = '↓'; }
+      if (stroke === 'U') { arrowClass = 'up';   arrowChar = '↑'; }
+      return `<div class="strum-cell${isOne ? ' beat-1' : ''}${lit ? ' lit' : ''}">
+        <span class="strum-beat-label">${BEAT_LABELS[i]}</span>
+        <span class="strum-arrow ${arrowClass}">${arrowChar}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function selectPattern(id) {
+    strumPatternIdx = id;
+    if (strumRunning) stopStrum();
+    buildPatternCards();
+    buildStrumGrid();
+    buildPlayStrumMini();
+    if (!trRunning) buildTrainerStrumGrid(-1);
+    buildSongStrumRows();
+  }
+
+  function onStrumBpmChange() {
+    strumBpm = parseInt(document.getElementById('strumBpmSlider').value);
+    document.getElementById('strumBpmVal').textContent = `${strumBpm} BPM`;
+    if (strumRunning) { stopStrum(); startStrum(); }
+  }
+
+  function startStrum() {
+    strumRunning = true;
+    strumSlot = 0;
+    document.getElementById('strumBtn').textContent = '⏹ Stop';
+    document.getElementById('strumBtn').classList.add('stop');
+
+    // 8th notes = 2× BPM
+    const ms = (60 / strumBpm / 2) * 1000;
+    const pat = STRUM_PATTERNS[strumPatternIdx].pattern;
+
+    function tick() {
+      buildStrumGrid(strumSlot);
+      const stroke = pat[strumSlot];
+      const isDownbeat = strumSlot % 2 === 0;
+      if (stroke) click(isDownbeat); else if (isDownbeat) click(false, true); // soft ghost click on beat
+      strumSlot = (strumSlot + 1) % 8;
+    }
+
+    tick();
+    strumInterval = setInterval(tick, ms);
+  }
+
+  function stopStrum() {
+    clearInterval(strumInterval);
+    strumRunning = false;
+    document.getElementById('strumBtn').textContent = '▶ Start';
+    document.getElementById('strumBtn').classList.remove('stop');
+    buildStrumGrid();
+  }
+
+  function toggleStrum() {
+    if (strumRunning) stopStrum(); else startStrum();
+  }
+
+  // mini strum pattern for play along bar
+  function buildPlayStrumMini() {
+    const pat = STRUM_PATTERNS[strumPatternIdx].pattern;
+    const name = STRUM_PATTERNS[strumPatternIdx].name;
+    document.getElementById('playStrumMini').innerHTML =
+      `<span style="font-size:11px;color:#aaa;margin-right:4px">${name}:</span>` +
+      pat.map((stroke, i) => {
+        const isOne = i % 2 === 0;
+        let arrow = '', cls = '';
+        if (stroke === 'D') { arrow = '↓'; cls = 'psm-arrow-d'; }
+        if (stroke === 'U') { arrow = '↑'; cls = 'psm-arrow-u'; }
+        return `<div class="psm-cell${stroke ? ' has-strum' : ''}">
+          <span class="psm-beat">${BEAT_LABELS[i]}</span>
+          <span class="${cls}">${arrow || '·'}</span>
+        </div>`;
+      }).join('');
+  }
+
+  // patch click() to accept a ghost param
+  const _origClick = click;
+
+  // ╔══════════════════════════════════════════╗
+  // ║  TAB SWITCHING                           ║
+  // ╚══════════════════════════════════════════╝
+
+  function showTab(name) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${name}`).classList.add('active');
+    document.getElementById(`tab-btn-${name}`).classList.add('active');
+    if (name !== 'trainer' && trRunning) stopTrainer();
+    if (name !== 'strum'   && strumRunning) stopStrum();
+    if (name !== 'play'    && playing) stopPlay();
+  }
+
+  // ╔══════════════════════════════════════════╗
+  // ║  INIT                                    ║
+  // ╚══════════════════════════════════════════╝
+
+  buildDots();
+  renderChord(0);
+  buildChordSelector();
+  buildBeatsRow();
+  buildBeatLights();
+  buildPatternCards();
+  buildStrumGrid();
+  buildTrainerStrumGrid(-1);
+  buildTempoPresets();
+  buildChordRef();
+  buildPlayStrumMini();
+  buildSong();
+  buildSongStrumRows();
+  </script>
+</body>
+</html>
