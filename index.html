@@ -620,12 +620,11 @@
       const fret = chord.strings[i];
       const x = pL + i * sGap;
       if (fret === -1) {
-        // X
-        s += `<line x1="${x-5}" y1="${pT-19}" x2="${x+5}" y2="${pT-9}" stroke="#555" stroke-width="2" stroke-linecap="round"/>`;
-        s += `<line x1="${x+5}" y1="${pT-19}" x2="${x-5}" y2="${pT-9}" stroke="#555" stroke-width="2" stroke-linecap="round"/>`;
+        // Muted — red dot
+        s += `<circle cx="${x}" cy="${pT - 14}" r="6" fill="#e63946"/>`;
       } else if (fret === 0) {
-        // Open circle
-        s += `<circle cx="${x}" cy="${pT - 14}" r="5" fill="none" stroke="#555" stroke-width="1.5"/>`;
+        // Open — green dot
+        s += `<circle cx="${x}" cy="${pT - 14}" r="6" fill="#2ecc71"/>`;
       } else {
         const rel = fret - chord.baseFret + 1;
         if (rel >= 1 && rel <= nFret) {
