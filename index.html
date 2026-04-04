@@ -1285,6 +1285,20 @@
   buildPlayStrumMini();
   buildSong();
   buildSongStrumRows();
+
+  // ── Screen Wake Lock — keep screen on while app is open ──
+  let wakeLock = null;
+  async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) { /* silently ignore — e.g. battery saver mode */ }
+  }
+  // Re-acquire when tab becomes visible again (iOS/Android release it on hide)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') requestWakeLock();
+  });
+  requestWakeLock();
   </script>
 </body>
 </html>
