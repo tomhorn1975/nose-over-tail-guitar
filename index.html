@@ -444,6 +444,7 @@
       </div>
       <div class="tempo-btn-row" id="tempoPresets"></div>
       <button class="big-btn" id="playBtn" onclick="togglePlayAlong()">▶ Play Along</button>
+      <button class="big-btn" id="exportBtn" onclick="exportPracticeTrack()" style="background:#1e1e36;border:1.5px solid var(--border);margin-top:8px">⬇ Download Practice Track</button>
     </div>
 
     <div class="play-strum-bar" id="playStrumBar">
@@ -1253,6 +1254,134 @@
 
   // patch click() to accept a ghost param
   const _origClick = click;
+
+  // ╔══════════════════════════════════════════╗
+  // ║  PRACTICE TRACK EXPORT                   ║
+  // ╚══════════════════════════════════════════╝
+
+  // Actual sounding pitches (root/mid/high) with capo on fret 2
+  const CHORD_FREQS = {
+    'A':  [123.47, 155.56, 185.00], // B  chord: B2 D#3 F#3
+    'D':  [82.41,  103.83, 123.47], // E  chord: E2 G#2 B2
+    'Em': [92.50,  110.00, 138.59], // F#m chord: F#2 A2 C#3
+    'G':  [110.00, 138.59, 164.81], // A  chord: A2 C#3 E3
+  };
+
+  function _schedClick(ctx, t, accent) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = accent ? 1400 : 900;
+    g.gain.setValueAtTime(accent ? 0.5 : 0.22, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    o.start(t); o.stop(t + 0.08);
+  }
+
+  function _schedStrum(ctx, t, stroke, chordKey) {
+    const freqs = CHORD_FREQS[chordKey] || CHORD_FREQS['G'];
+    const isDown = stroke === 'D';
+    const dur = isDown ? 0.20 : 0.13;
+    const vol = isDown ? 0.14 : 0.09;
+    freqs.forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const flt = ctx.createBiquadFilter();
+      const g = ctx.createGain();
+      o.connect(flt); flt.connect(g); g.connect(ctx.destination);
+      o.type = 'sawtooth';
+      flt.type = 'lowpass';
+      flt.frequency.value = isDown ? 900 : 1800;
+      flt.Q.value = 0.8;
+      // Spread notes slightly for strum feel
+      const spread = isDown ? i * 0.007 : (freqs.length - 1 - i) * 0.007;
+      const st = t + spread;
+      g.gain.setValueAtTime(vol, st);
+      g.gain.exponentialRampToValueAtTime(0.001, st + dur);
+      o.start(st); o.stop(st + dur + 0.02);
+    });
+  }
+
+  function _bufToWav(buf) {
+    const nCh = buf.numberOfChannels, sr = buf.sampleRate, len = buf.length;
+    const dataLen = len * nCh * 2;
+    const ab = new ArrayBuffer(44 + dataLen);
+    const v = new DataView(ab);
+    const ws = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+    ws(0, 'RIFF'); v.setUint32(4, 36 + dataLen, true); ws(8, 'WAVE');
+    ws(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+    v.setUint16(22, nCh, true); v.setUint32(24, sr, true);
+    v.setUint32(28, sr * nCh * 2, true); v.setUint16(32, nCh * 2, true);
+    v.setUint16(34, 16, true); ws(36, 'data'); v.setUint32(40, dataLen, true);
+    let off = 44;
+    for (let i = 0; i < len; i++) {
+      for (let c = 0; c < nCh; c++) {
+        const s = Math.max(-1, Math.min(1, buf.getChannelData(c)[i]));
+        v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        off += 2;
+      }
+    }
+    return ab;
+  }
+
+  async function exportPracticeTrack() {
+    const btn = document.getElementById('exportBtn');
+    btn.textContent = '⏳ Rendering…';
+    btn.disabled = true;
+    await new Promise(r => setTimeout(r, 60));
+
+    const bpm = playBpm;
+    const beatsPerChord = 4;
+    const secPerBeat = 60 / bpm;
+    const countIn = 4; // 4 click beats before song
+
+    // Flatten song into ordered chord array
+    const seq = [];
+    SONG.forEach(sec => sec.lines.forEach(line => {
+      if (line.chords) line.chords.forEach(c => seq.push(c.t));
+    }));
+
+    const countInSec = countIn * secPerBeat;
+    const songSec = seq.length * beatsPerChord * secPerBeat;
+    const totalSec = countInSec + songSec + 1.0; // +1 tail
+
+    const sr = 44100;
+    const offCtx = new OfflineAudioContext(2, Math.ceil(totalSec * sr), sr);
+    const pat = STRUM_PATTERNS[strumPatternIdx].pattern;
+
+    // Count-in clicks
+    for (let i = 0; i < countIn; i++) {
+      _schedClick(offCtx, i * secPerBeat, i === 0);
+    }
+
+    // Song chords
+    seq.forEach((chordKey, ci) => {
+      const chordStart = countInSec + ci * beatsPerChord * secPerBeat;
+      for (let beat = 0; beat < beatsPerChord; beat++) {
+        for (let half = 0; half < 2; half++) {
+          const slot = (beat * 2 + half) % 8;
+          const t = chordStart + (beat + half * 0.5) * secPerBeat;
+          if (beat === 0 && half === 0) _schedClick(offCtx, t, true);
+          const stroke = pat[slot];
+          if (stroke) _schedStrum(offCtx, t, stroke, chordKey);
+        }
+      }
+    });
+
+    try {
+      const rendered = await offCtx.startRendering();
+      const wav = _bufToWav(rendered);
+      const blob = new Blob([wav], { type: 'audio/wav' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `nose-over-tail-${bpm}bpm.wav`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch (e) {
+      alert('Export failed: ' + e.message);
+    }
+
+    btn.textContent = '⬇ Download Practice Track';
+    btn.disabled = false;
+  }
 
   // ╔══════════════════════════════════════════╗
   // ║  TAB SWITCHING                           ║
